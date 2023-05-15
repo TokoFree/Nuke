@@ -31,14 +31,14 @@ final class TaskDecodeImage: ImagePipelineTask<ImageResponse> {
         // Sanity check
         guard !data.isEmpty else {
             if isCompleted {
-                send(error: .decodingFailed)
+                send(error: .decodingFailed(urlResponse))
             }
             return
         }
 
         guard let decoder = decoder(data: data, urlResponse: urlResponse, isCompleted: isCompleted) else {
             if isCompleted {
-                send(error: .decodingFailed)
+                send(error: .decodingFailed(urlResponse))
             } // Try again when more data is downloaded.
             return
         }
@@ -49,7 +49,7 @@ final class TaskDecodeImage: ImagePipelineTask<ImageResponse> {
             let response = signpost(log, "DecodeImageData", isCompleted ? "FinalImage" : "ProgressiveImage") {
                 decoder.decode(data, urlResponse: urlResponse, isCompleted: isCompleted)
             }
-            self.sendResponse(response, isCompleted: isCompleted)
+            self.sendResponse(response, urlResponse: urlResponse, isCompleted: isCompleted)
         } else {
             operation = pipeline.configuration.imageDecodingQueue.add { [weak self] in
                 guard let self = self else { return }
@@ -58,17 +58,17 @@ final class TaskDecodeImage: ImagePipelineTask<ImageResponse> {
                     decoder.decode(data, urlResponse: urlResponse, isCompleted: isCompleted)
                 }
                 self.async {
-                    self.sendResponse(response, isCompleted: isCompleted)
+                    self.sendResponse(response, urlResponse: urlResponse, isCompleted: isCompleted)
                 }
             }
         }
     }
 
-    private func sendResponse(_ response: ImageResponse?, isCompleted: Bool) {
+    private func sendResponse(_ response: ImageResponse?, urlResponse: URLResponse?, isCompleted: Bool) {
         if let response = response {
             send(value: response, isCompleted: isCompleted)
         } else if isCompleted {
-            send(error: .decodingFailed)
+            send(error: .decodingFailed(urlResponse))
         }
     }
 

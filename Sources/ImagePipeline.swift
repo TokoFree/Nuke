@@ -434,17 +434,17 @@ public extension ImagePipeline {
     /// Represents all possible image pipeline errors.
     enum Error: Swift.Error, CustomDebugStringConvertible {
         /// Data loader failed to load image data with a wrapped error.
-        case dataLoadingFailed(Swift.Error)
+        case dataLoadingFailed(URLResponse?, Swift.Error)
         /// Decoder failed to produce a final image.
-        case decodingFailed
+        case decodingFailed(URLResponse?)
         /// Processor failed to produce a final image.
-        case processingFailed
+        case processingFailed(URLResponse?)
 
         public var debugDescription: String {
             switch self {
-            case let .dataLoadingFailed(error): return "Failed to load image data: \(error)"
-            case .decodingFailed: return "Failed to create an image from the image data"
-            case .processingFailed: return "Failed to process the image"
+            case let .dataLoadingFailed(_, error): return "Failed to load image data: \(error)"
+            case .decodingFailed(_): return "Failed to create an image from the image data"
+            case .processingFailed(_): return "Failed to process the image"
             }
         }
     }

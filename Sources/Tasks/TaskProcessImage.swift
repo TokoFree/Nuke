@@ -7,6 +7,9 @@ import Foundation
 /// Receives images from `TaskDecodeImage` or intermidiate `TaskProcessImage`
 /// and applies respective processors.
 final class TaskProcessImage: ImagePipelineTask<ImageResponse> {
+    
+    public var urlResponse: URLResponse? = nil
+    
     override func start() {
         assert(!request.processors.isEmpty)
         guard !isDisposed, !request.processors.isEmpty else { return }
@@ -33,9 +36,9 @@ final class TaskProcessImage: ImagePipelineTask<ImageResponse> {
         }
     }
 
-    private func processImage(_ response: ImageResponse, isCompleted: Bool, processor: ImageProcessing) {
-        guard !(ImagePipeline.Configuration._isAnimatedImageDataEnabled && response.image._animatedImageData != nil) else {
-            send(value: response, isCompleted: isCompleted)
+    private func processImage(_ imageResponse: ImageResponse, isCompleted: Bool, processor: ImageProcessing) {
+        guard !(ImagePipeline.Configuration._isAnimatedImageDataEnabled && imageResponse.image._animatedImageData != nil) else {
+            send(value: imageResponse, isCompleted: isCompleted)
             return
         }
 
@@ -48,15 +51,15 @@ final class TaskProcessImage: ImagePipelineTask<ImageResponse> {
         operation = pipeline.configuration.imageProcessingQueue.add { [weak self] in
             guard let self = self else { return }
 
-            let context = ImageProcessingContext(request: self.request, response: response, isFinal: isCompleted)
+            let context = ImageProcessingContext(request: self.request, response: imageResponse, isFinal: isCompleted)
             let response = signpost(log, "ProcessImage", isCompleted ? "FinalImage" : "ProgressiveImage") {
-                response.map { processor.process($0, context: context) }
+                imageResponse.map { processor.process($0, context: context) }
             }
 
             self.async {
                 guard let response = response else {
                     if isCompleted {
-                        self.send(error: .processingFailed)
+                        self.send(error: .processingFailed(imageResponse.urlResponse))
                     } // Ignore when progressive processing fails
                     return
                 }

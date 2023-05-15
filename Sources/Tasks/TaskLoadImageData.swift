@@ -154,13 +154,13 @@ final class TaskLoadImageData: ImagePipelineTask<(Data, URLResponse?)> {
     private func dataTaskDidFinish(error: Swift.Error?) {
         if let error = error {
             tryToSaveResumableData()
-            send(error: .dataLoadingFailed(error))
+            send(error: .dataLoadingFailed(urlResponse, error))
             return
         }
 
         // Sanity check, should never happen in practice
         guard !data.isEmpty else {
-            send(error: .dataLoadingFailed(URLError(.unknown, userInfo: [:])))
+            send(error: .dataLoadingFailed(urlResponse, URLError(.unknown, userInfo: [:])))
             return
         }
 
