@@ -47,26 +47,26 @@ final class TaskFetchDecodedImage: ImagePipelineTask<ImageResponse> {
         }
 
         if !decoder.isAsynchronous {
-            didFinishDecoding(decoder: decoder, context: context, result: decode())
+            didFinishDecoding(urlResponse: urlResponse, decoder: decoder, context: context, result: decode())
         } else {
             operation = pipeline.configuration.imageDecodingQueue.add { [weak self] in
                 guard let self = self else { return }
 
                 let result = decode()
                 self.pipeline.queue.async {
-                    self.didFinishDecoding(decoder: decoder, context: context, result: result)
+                    self.didFinishDecoding(urlResponse: urlResponse, decoder: decoder, context: context, result: result)
                 }
             }
         }
     }
 
-    private func didFinishDecoding(decoder: any ImageDecoding, context: ImageDecodingContext, result: Result<ImageResponse, Error>) {
+    private func didFinishDecoding(urlResponse: URLResponse?, decoder: any ImageDecoding, context: ImageDecodingContext, result: Result<ImageResponse, Error>) {
         switch result {
         case .success(let response):
             send(value: response, isCompleted: context.isCompleted)
         case .failure(let error):
             if context.isCompleted {
-                send(error: .decodingFailed(decoder: decoder, context: context, error: error))
+                send(error: .decodingFailed(urlResponse: urlResponse, decoder: decoder, context: context, error: error))
             }
         }
     }

@@ -15,7 +15,7 @@ final class TaskFetchOriginalImageData: ImagePipelineTask<(Data, URLResponse?)> 
     override func start() {
         guard let urlRequest = request.urlRequest else {
             // A malformed URL prevented a URL request from being initiated.
-            send(error: .dataLoadingFailed(error: URLError(.badURL)))
+            send(error: .dataLoadingFailed(urlResponse: urlResponse, error: URLError(.badURL)))
             return
         }
 
@@ -130,13 +130,13 @@ final class TaskFetchOriginalImageData: ImagePipelineTask<(Data, URLResponse?)> 
     private func dataTaskDidFinish(error: Swift.Error?) {
         if let error = error {
             tryToSaveResumableData()
-            send(error: .dataLoadingFailed(error: error))
+            send(error: .dataLoadingFailed(urlResponse: urlResponse, error: error))
             return
         }
 
         // Sanity check, should never happen in practice
         guard !data.isEmpty else {
-            send(error: .dataIsEmpty)
+            send(error: .dataIsEmpty(urlResponse: urlResponse))
             return
         }
 

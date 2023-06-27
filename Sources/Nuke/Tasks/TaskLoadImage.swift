@@ -168,7 +168,7 @@ final class TaskLoadImage: ImagePipelineTask<ImageResponse> {
                 self._process(response, isCompleted: isCompleted, processors: processors.dropLast())
             case .error(let error):
                 if isCompleted {
-                    self.send(error: .processingFailed(processor: processor, context: context, error: error))
+                    self.send(error: .processingFailed(urlResponse: response.urlResponse, processor: processor, context: context, error: error))
                 }
             case .progress:
                 break // Do nothing (Not reported by OperationTask)

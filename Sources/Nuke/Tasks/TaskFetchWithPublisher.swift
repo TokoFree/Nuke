@@ -33,7 +33,7 @@ final class TaskFetchWithPublisher: ImagePipelineTask<(Data, URLResponse?)> {
         }
 
         guard let publisher = request.publisher else {
-            send(error: .dataLoadingFailed(error: URLError(.unknown))) // This is just a placeholder error, never thrown
+            send(error: .dataLoadingFailed(urlResponse: nil, error: URLError(.unknown))) // This is just a placeholder error, never thrown
             return assertionFailure("This should never happen")
         }
 
@@ -60,13 +60,13 @@ final class TaskFetchWithPublisher: ImagePipelineTask<(Data, URLResponse?)> {
         switch result {
         case .finished:
             guard !data.isEmpty else {
-                send(error: .dataIsEmpty)
+                send(error: .dataIsEmpty(urlResponse: nil))
                 return
             }
             storeDataInCacheIfNeeded(data)
             send(value: (data, nil), isCompleted: true)
         case .failure(let error):
-            send(error: .dataLoadingFailed(error: error))
+            send(error: .dataLoadingFailed(urlResponse: nil, error: error))
         }
     }
 }
